@@ -1,39 +1,37 @@
 class Solution {
-public:
-    double maxProbability(int n, vector<vector<int>>& edges, vector<double>& succProb, int start, int end) {
+ public:
+  double maxProbability(int n, vector<vector<int>>& edges,
+                        vector<double>& succProb, int start, int end) {
+    // {a: [(b, probability_ab)]}
+    vector<vector<pair<int, double>>> graph(n);
+    // (the probability to reach u, u)
+    priority_queue<pair<double, int>> maxHeap;
+    maxHeap.emplace(1.0, start);
+    vector<bool> seen(n);
 
-        // Adjacency list
-        vector<vector<pair<int, double>>> adj(n);
-        for (int i = 0; i < edges.size(); i++) {
-            int u = edges[i][0];
-            int v = edges[i][1];
-            adj[u].push_back({v, succProb[i]});
-            adj[v].push_back({u, succProb[i]});
-        }
-
-        // ans will be in dist[end]
-        vector<double> dist(n, 0.0);
-        dist[start] = 1.0;
-        
-        queue<int> q;
-        q.push(start);
-        
-        while (!q.empty()) {
-            int curr = q.front();
-            q.pop();
-            
-            for (auto x : adj[curr]) {
-                int next = x.first;
-                double prob = x.second;
-                double newProb = dist[curr] * prob;
-                
-                if (newProb > dist[next]) {
-                    dist[next] = newProb;
-                    q.push(next);
-                }
-            }
-        }
-        
-        return dist[end];
+    for (int i = 0; i < edges.size(); ++i) {
+      const int u = edges[i][0];
+      const int v = edges[i][1];
+      const double prob = succProb[i];
+      graph[u].emplace_back(v, prob);
+      graph[v].emplace_back(u, prob);
     }
+
+    while (!maxHeap.empty()) {
+      const auto [prob, u] = maxHeap.top();
+      maxHeap.pop();
+      if (u == end)
+        return prob;
+      if (seen[u])
+        continue;
+      seen[u] = true;
+      for (const auto& [nextNode, edgeProb] : graph[u]) {
+        if (seen[nextNode])
+          continue;
+        maxHeap.emplace(prob * edgeProb, nextNode);
+      }
+    }
+
+    return 0;
+  }
 };
